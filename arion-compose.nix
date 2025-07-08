@@ -56,6 +56,10 @@ let
     ENABLE_UPDATES = "false";
     PGSSLMODE = "disable";
     
+    # File storage configuration (use local storage instead of S3)
+    FILE_STORAGE = "local";
+    FILE_STORAGE_LOCAL_ROOT_DIR = "/var/lib/outline/data";
+    
     # SMTP configuration (non-secret parts)
   } // lib.optionalAttrs cfg.smtp.enabled {
     SMTP_HOST = cfg.smtp.host;
