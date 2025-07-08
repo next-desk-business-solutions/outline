@@ -54,6 +54,7 @@ let
     # Required settings
     FORCE_HTTPS = "false";
     ENABLE_UPDATES = "false";
+    PGSSLMODE = "disable";
     
     # SMTP configuration (non-secret parts)
   } // lib.optionalAttrs cfg.smtp.enabled {
