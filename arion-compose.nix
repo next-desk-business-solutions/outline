@@ -1,0 +1,121 @@
+{ pkgs, lib ? pkgs.lib, config ? null, ... }:
+
+let
+  # Default configuration for local development
+  defaultConfig = {
+    port = 3001;
+    url = "http://localhost:3001";
+    database = {
+      host = "twenty-db-1";
+      port = 5432;
+      user = "postgres";
+      password = "postgres";
+      passwordFile = null;
+      database = "outline";
+    };
+    redis = {
+      host = "twenty-redis-1";
+      port = 6379;
+    };
+    secretKey = "replace_me_with_a_random_string";
+    secretKeyFile = null;
+    utilsSecret = "replace_me_with_another_random_string";
+    utilsSecretFile = null;
+    auth = {
+      google = {
+        enabled = false;
+        clientIdFile = null;
+        clientSecretFile = null;
+      };
+    };
+    smtp = {
+      enabled = false;
+      host = "smtp.gmail.com";
+      port = 587;
+      user = "";
+      passwordFile = null;
+      fromEmail = "";
+      replyEmail = "";
+    };
+  };
+
+  # Use provided config or fallback to defaults
+  cfg = lib.recursiveUpdate defaultConfig (if config != null then config else {});
+
+  # Non-secret environment variables always included
+  baseEnv = {
+    NODE_ENV = "production";
+    URL = cfg.url;
+    PORT = toString cfg.port;
+    
+    # Redis configuration (non-secret)
+    REDIS_URL = "redis://${cfg.redis.host}:${toString cfg.redis.port}";
+    
+    # Required settings
+    FORCE_HTTPS = "false";
+    ENABLE_UPDATES = "false";
+    
+    # SMTP configuration (non-secret parts)
+  } // lib.optionalAttrs cfg.smtp.enabled {
+    SMTP_HOST = cfg.smtp.host;
+    SMTP_PORT = toString cfg.smtp.port;
+    SMTP_USERNAME = cfg.smtp.user;
+    SMTP_FROM_EMAIL = cfg.smtp.fromEmail;
+    SMTP_REPLY_EMAIL = cfg.smtp.replyEmail;
+    SMTP_SECURE = "true";
+  };
+  
+  # Environment variables for container
+  # When using secret files, only include baseEnv
+  # All secrets will be provided via the env file created by systemd preStart
+  environment = baseEnv;
+  
+  # Environment file for containers when using secrets
+  envFile = lib.optionals (cfg.database.passwordFile != null || cfg.secretKeyFile != null || cfg.utilsSecretFile != null) [
+    "/run/outline/env"
+  ];
+  
+  # Volume mounts for secrets
+  secretVolumes = lib.optionals (cfg.database.passwordFile != null || cfg.secretKeyFile != null || cfg.utilsSecretFile != null) [
+    "/run/agenix:/secrets:ro"
+  ];
+in
+{
+  project.name = "outline";
+  
+  # Network configuration to connect with Twenty's containers
+  networks.default.external = false;
+  networks.twenty_default = {
+    external = true;
+  };
+
+  services = {
+    # Outline application
+    outline = {
+      service = {
+        image = "docker.getoutline.com/outlinewiki/outline:latest";
+        ports = [ "${toString cfg.port}:3000" ];
+        
+        volumes = [
+          "outline-data:/var/lib/outline/data"
+        ] ++ secretVolumes;
+        
+        environment = environment;
+        
+        env_file = envFile;
+        
+        networks = [ "default" "twenty_default" ];
+        
+        restart = "always";
+        
+        # Run migrations before starting
+        command = [ "sh" "-c" "yarn db:migrate && yarn start" ];
+      };
+    };
+  };
+
+  # Docker volumes
+  docker-compose.volumes = {
+    outline-data = {};
+  };
+}
