@@ -109,8 +109,8 @@ in
         
         restart = "always";
         
-        # Run migrations before starting
-        command = [ "sh" "-c" "yarn db:migrate && yarn start" ];
+        # Start the application (migrations handled separately)
+        command = [ "yarn" "start" ];
       };
     };
   };
