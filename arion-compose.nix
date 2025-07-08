@@ -95,7 +95,7 @@ in
     outline = {
       service = {
         image = "docker.getoutline.com/outlinewiki/outline:latest";
-        ports = [ "${toString cfg.port}:3000" ];
+        ports = [ "${toString cfg.port}:${toString cfg.port}" ];
         
         volumes = [
           "outline-data:/var/lib/outline/data"
