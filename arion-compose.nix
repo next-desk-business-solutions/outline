@@ -60,7 +60,7 @@ let
     FILE_STORAGE = "local";
     FILE_STORAGE_LOCAL_ROOT_DIR = "/var/lib/outline/data";
     
-    # SMTP configuration (non-secret parts)
+    # SMTP configuration
   } // lib.optionalAttrs cfg.smtp.enabled {
     SMTP_HOST = cfg.smtp.host;
     SMTP_PORT = toString cfg.smtp.port;
@@ -68,6 +68,10 @@ let
     SMTP_FROM_EMAIL = cfg.smtp.fromEmail;
     SMTP_REPLY_EMAIL = cfg.smtp.replyEmail;
     SMTP_SECURE = "true";
+  } // lib.optionalAttrs cfg.slack.enabled {
+    # Slack configuration
+    SLACK_APP_ID = cfg.slack.appId;
+    SLACK_MESSAGE_ACTIONS = toString cfg.slack.messageActions;
   };
   
   # Environment variables for container
