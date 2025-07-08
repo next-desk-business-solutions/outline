@@ -85,7 +85,7 @@ in
   
   # Network configuration to connect with Twenty's containers
   networks.default.external = false;
-  networks.twenty_default = {
+  networks.twenty = {
     external = true;
   };
 
@@ -104,7 +104,7 @@ in
         
         env_file = envFile;
         
-        networks = [ "default" "twenty_default" ];
+        networks = [ "default" "twenty" ];
         
         restart = "always";
         
