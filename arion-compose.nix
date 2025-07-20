@@ -113,7 +113,7 @@ in
         
         env_file = envFile;
         
-        networks = [ "twenty" ];
+        networks = [ "default" "twenty" ];
         
         restart = "always";
         
